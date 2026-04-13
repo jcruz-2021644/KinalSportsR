@@ -23,7 +23,8 @@ export const AuthPage = () => {
           </p>
         </div>
 
-        {isForgot ? (<ForgotPasswordForm onSwitch={() => setIsForgot(false)} />) 
+        {isForgot ? (
+          <ForgotPasswordForm onSwitch={() => setIsForgot(false)} />) 
         : (<LoginForm onForgot={() => setIsForgot(true)} />)}
 
       </div>
