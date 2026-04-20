@@ -22,13 +22,13 @@ export const useUserManagementStore = create((set, get) => ({
 
     try {
     const fetcher = typeof apiFn === "function" ? apiFn : getAllUsers;
-    const users = await fetcher();
+    const result = await fetcher();
 
     set({ users: result.users || result, loading: false });
     } catch (err) {
     set({
         error: err.message || "Error al cargar los usuarios",
-        loadin: false,
+        loading: false,
     });
     }
 },

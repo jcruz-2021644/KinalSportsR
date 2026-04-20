@@ -1,9 +1,48 @@
-import { useEffect, useMemo, useState } from 'react'
-import { useUserManagementStore } from '../store/useUserManagmentStore'
-import { Spinner } from '../../../shared/components/layout/Spinner'
-import { showError, showSuccess } from '../../../shared/utils/toast'
+import { useEffect, useMemo, useState } from "react"
+import { useUserManagementStore } from "../store/useUserManagmentStore"
+import { Spinner } from "../../../shared/components/layout/Spinner"
+import { showError, showSuccess } from "../../../shared/utils/toast"
+import { CreateUserModal } from "./CreateUserModal"
+import { useAuthStore } from "../../auth/store/authStore"
+import { UserDetailModal } from "./UserDetailModal"
+const PAGE_SIZE = 8;
+
 export const Users = () => {
-  const { loading } = useUserManagementStore();
+
+  const { users, loading, error, fetchUsers } = useUserManagementStore();
+
+  const registerUser = useAuthStore((state) => state.register);
+
+  const [search, setSearch] = useState("");
+  const [roleFilter, setFilter] = useState("ALL");
+  const [page, setPage] = useState(1);
+  const [openCreateModal, setOpenCreateModal] = useState(false);
+  const [openDetailModal, setOpenDetailModal] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
+
+
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers])
+
+  const handleOpenDatail = (user) => {
+    setSelectedUser(user);
+    setOpenDetailModal(true);
+  }
+
+  const handleCreate = async (formData) => {
+    const res = await registerUser(formData);
+    if (res.success) {
+      showSuccess("Usuario creado. Se envio correo de verificacion");
+      await fetchUsers(undefined, { force: true });
+      return true;
+    };
+    showError(res.error || "No se pudo crear el usuario");
+    return false;
+  }
+
+  if (loading && users.length === 0) return <Spinner />;
+
   return (
     <div className="p-4">
 
@@ -16,7 +55,9 @@ export const Users = () => {
           </p>
         </div>
 
-        <button className="bg-main-blue px-4 py-2 rounded text-white hover:opacity-90 transition">
+        <button className="bg-main-blue px-4 py-2 rounded text-white hover:opacity-90 transition"
+          onClick={() => setOpenCreateModal(true)}
+        >
           + Agregar Usuario
         </button>
       </div>
@@ -53,49 +94,43 @@ export const Users = () => {
 
             {/* Body (datos de ejemplo) */}
             <tbody>
-              <tr className="border-t hover:bg-gray-50">
-                <td className="px-4 py-3 font-medium text-gray-800">
-                  Juan Pérez
-                </td>
-                <td className="px-4 py-3 text-gray-700">@juanp</td>
-                <td className="px-4 py-3">
-                  <span className="px-2 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-700">
-                    ADMIN_ROLE
-                  </span>
-                </td>
-                <td className="px-4 py-3 text-right">
-                  <button className="px-3 py-1.5 rounded-lg bg-main-blue text-white text-xs font-semibold hover:opacity-90">
-                    Ver / Editar
-                  </button>
-                </td>
-              </tr>
+              {users.length === 0 ? (
+                <tr>
+                  <td
+                    className="px-4 py-6 text-center text-gray-500"
+                    colSpan={4}
+                  >
+                    No hay usuarios para mostrar.
+                  </td>
+                </tr>
+              ) : (
+                users.map((u) => (
+                  <tr key={u.id} className="border-t hover:bg-gray-50">
+                    <td className="px-4 py-3 font-medium text-gray-800">
+                      {[u.name, u.surname].filter(Boolean).join(" ") || "-"}
+                    </td>
+                    <td className="px-4 py-3 text-gray-700">
+                      @{u.username}
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className={`px-2 py-1 rounded-full text-xs font-semibold ${u.role === "ADMIN_ROLE"
+                        ? "bg-blue-100 text-blue-700"
+                        : "bg-gray-100 text-gray-700"
+                        }`}>
+                        {u.role}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <button className="px-3 py-1.5 rounded-lg bg-main-blue text-white text-xs font-semibold hover:opacity-90"
+                        onClick={() => handleOpenDatail(u)}
 
-              <tr className="border-t hover:bg-gray-50">
-                <td className="px-4 py-3 font-medium text-gray-800">
-                  María López
-                </td>
-                <td className="px-4 py-3 text-gray-700">@maria</td>
-                <td className="px-4 py-3">
-                  <span className="px-2 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-700">
-                    USER_ROLE
-                  </span>
-                </td>
-                <td className="px-4 py-3 text-right">
-                  <button className="px-3 py-1.5 rounded-lg bg-main-blue text-white text-xs font-semibold hover:opacity-90">
-                    Ver / Editar
-                  </button>
-                </td>
-              </tr>
-
-              {/* Estado vacío */}
-              <tr>
-                <td
-                  className="px-4 py-6 text-center text-gray-500"
-                  colSpan={4}
-                >
-                  No hay usuarios para mostrar.
-                </td>
-              </tr>
+                      >
+                        Ver / Editar
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
@@ -122,6 +157,23 @@ export const Users = () => {
         </div>
       </div>
 
+      <CreateUserModal
+        isOpen={openCreateModal}
+        onClose={() => setOpenCreateModal(false)}
+        onCreate={handleCreate}
+        loading={loading}
+        error={error}
+      />
+      <UserDetailModal
+        key={selectedUser?.id || "no-user"}
+        isOpen={openDetailModal}
+        onClose={() => {
+          setOpenDetailModal(false)
+          setSelectedUser(null);
+        }}
+        user={selectedUser}
+        loading={loading}
+      />
     </div>
   );
 }
