@@ -1,28 +1,44 @@
 import { Spinner } from "../../../shared/components/layout/Spinner.jsx";
 import defaultAvatarImg from "../../../assets/img/yo bien aki y la crew.jpg";
+import { useState } from "react";
 
 export const UserDetailModal = ({
     isOpen,
     onClose,
     user,
     loading,
+    currentUserId,
+    onSaveRole,
 }) => {
     if (!isOpen || !user) return null;
+    const [role, setRole] = useState(user?.role || "USER_ROLE")
 
-    const avatarSrc = (()=>{
+
+    const avatarSrc = (() => {
         const value = user?.profilePicture?.trim();
-        if(!value) return defaultAvatarImg;
-        
-        if( value.startsWith("http://") || value.startsWith("https://")){
+        if (!value) return defaultAvatarImg;
+
+        if (value.startsWith("http://") || value.startsWith("https://")) {
             return value;
         }
 
-const cloudinaryBase =
-        import.meta.env.VITE_CLOUDINARY_BASE_URL ||
-        "https://res.cloudinary.com/dqx1m6nxh/image/upload/"
+        const cloudinaryBase =
+            import.meta.env.VITE_CLOUDINARY_BASE_URL ||
+            "https://res.cloudinary.com/dqx1m6nxh/image/upload/"
         return `${cloudinaryBase}${value.replace(/^\/|\/$/g, '')}`
 
     })();
+
+    const isCurrentUser = currentUserId === user.id;
+    const hasChanges = role !== user.role;
+
+    const handleSave = async () => {
+        if (!hasChanges || isCurrentUser) {
+            onClose();
+            return;
+        }
+        await onSaveRole(user, role);
+    }
 
     return (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex justify-center items-center z-50 px-3 sm:px-4">
@@ -51,7 +67,7 @@ const cloudinaryBase =
                                 e.currentTarget.onError = null;
                                 e.currentTarget.src = defaultAvatarImg
                             }}
-                        
+
                         />
                         <div>
                             <p className="font-bold text-gray-900 text-lg">
@@ -85,11 +101,19 @@ const cloudinaryBase =
                             Rol
                         </label>
                         <select
+                            value={role}
+                            onChange={(e) => setRole(e.target.value)}
+                            disabled={isCurrentUser}
                             className="w-full px-3 py-2 rounded-lg border-2 border-gray-300 bg-gray-50 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition"
                         >
                             <option value="USER_ROLE">USER_ROLE</option>
                             <option value="ADMIN_ROLE">ADMIN_ROLE</option>
                         </select>
+                        {isCurrentUser && (
+                            <p className="text-xs text-gray-500 mt-1">
+                                No puedes cambiar tu propio rol
+                            </p>
+                        )}
                     </div>
                 </div>
 
@@ -103,6 +127,8 @@ const cloudinaryBase =
                     </button>
                     <button
                         type="button"
+                        onClick={handleSave}
+                        disabled={loading || !hasChanges || isCurrentUser}
                         className="w-full sm:w-auto px-5 py-2 rounded-lg text-white font-medium transition shadow"
                         style={{
                             background:

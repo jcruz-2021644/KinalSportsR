@@ -14,3 +14,8 @@ export const register = async (data) => {
     headers: { "Content-Type": "multipart/form-data" },
   });
 };
+
+export const updateUserRole = async (userId, roleName)=>{
+  return await axiosAuth.put(`/users/${userId}/role`,{roleName} )
+
+}

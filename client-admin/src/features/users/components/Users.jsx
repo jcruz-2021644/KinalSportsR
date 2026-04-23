@@ -5,14 +5,15 @@ import { showError, showSuccess } from "../../../shared/utils/toast"
 import { CreateUserModal } from "./CreateUserModal"
 import { useAuthStore } from "../../auth/store/authStore"
 import { UserDetailModal } from "./UserDetailModal"
+import { updateUserRole } from "../../../shared/api"
 const PAGE_SIZE = 8;
 
 export const Users = () => {
 
-  const { users, loading, error, fetchUsers } = useUserManagementStore();
+  const { users, loading, error, fetchUsers, updateUserRole } = useUserManagementStore();
 
   const registerUser = useAuthStore((state) => state.register);
-
+  const currentUser = useAuthStore((state) => state.user);
   const [search, setSearch] = useState("");
   const [roleFilter, setFilter] = useState("ALL");
   const [page, setPage] = useState(1);
@@ -24,6 +25,23 @@ export const Users = () => {
   useEffect(() => {
     fetchUsers();
   }, [fetchUsers])
+
+  useEffect(() => {
+    if (error) {
+      showError(error);
+    }
+  }, [error])
+
+  const handleSaveRole = async (user, newRole) => {
+    const res = await updateUserRole(user.id, newRole)
+    if (res.success) {
+      showSuccess("Rol actualizado correctamente");
+      setOpenDetailModal(false);
+      setSelectedUser(null)
+    } else {
+      showError(res.error || "No se pudo actualizar el rol")
+    }
+  }
 
   const handleOpenDatail = (user) => {
     setSelectedUser(user);
@@ -173,6 +191,8 @@ export const Users = () => {
         }}
         user={selectedUser}
         loading={loading}
+        onSaveRole={handleSaveRole}
+        currentUserId={currentUser?.id}
       />
     </div>
   );
