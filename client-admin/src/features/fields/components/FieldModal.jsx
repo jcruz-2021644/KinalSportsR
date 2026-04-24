@@ -52,7 +52,7 @@ export const FieldModal = ({ isOpen, onClose, field }) => {
             const file = photoFile[0];
             setPreview(URL.createObjectURL(file))
         }
-    })
+    },[photoFile])
 
 
     const onsubmit = async (data) => {
@@ -60,6 +60,7 @@ export const FieldModal = ({ isOpen, onClose, field }) => {
         reset();
         setPreview(null);
         onClose();
+        
 
     };
 
