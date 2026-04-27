@@ -5,13 +5,16 @@ import { useEffect as useToastEffect } from 'react';
 import { showError } from '../../../shared/utils/toast.js';
 import { getFields } from '../../../shared/api/admin.js';
 import { FieldModal } from './FieldModal.jsx';
-
+import { useUIStore } from '../../../shared/components/ui/store/uiStore.js';
+import { deletedField } from '../../../shared/api/admin.js';
 
 export const Fields = () => {
 
     const { fields, loading, error, getFields } = useFieldStores();
-
+    const[selectedField ,setSelectedField] = useState(null);
     const [openModal, setOpenModal] = useState(false);
+    const {openConfirm} = useUIStore();
+
 
     useEffect(() => {
         getFields();
@@ -44,6 +47,7 @@ export const Fields = () => {
                 <button
                     onClick={() => {
                         setOpenModal(true)
+                        setSelectedField(null)
                     }}
                     className="bg-main-blue px-4 py-2 rounded text-white hover:opacity-90 transition">
                     + Agregar Campo
@@ -81,10 +85,24 @@ export const Fields = () => {
                                 ID: {field._id}
                             </p>
                             <div className="flex gap-3 mt-5">
-                                <button className="flex-1 py-2 rounded-lg bg-main-blue text-white font-medium hover:opacity-90 transition">
+                                <button
+                                    onClick={() => {
+                                        setSelectedField(field)
+                                        setOpenModal(true)
+                                    }
+                                    }
+
+                                    className="flex-1 py-2 rounded-lg bg-main-blue text-white font-medium hover:opacity-90 transition">
                                     ✏️ Editar
                                 </button>
-                                <button className="flex-1 py-2 rounded-lg bg-red-600 text-white font-medium hover:bg-red-700 transition">
+                                <button 
+                                    onClick={() =>openConfirm({
+                                        title: "Eliminar campo",
+                                        message: `¿Eliminar ${field.fieldName}`,
+                                        onConfirm: () => deletedField(field._id)
+                                    })}
+                                
+                                className="flex-1 py-2 rounded-lg bg-red-600 text-white font-medium hover:bg-red-700 transition">
                                     🗑️ Eliminar
                                 </button>
                             </div>
@@ -97,7 +115,9 @@ export const Fields = () => {
                 isOpen={openModal}
                 onClose={() => {
                     setOpenModal(false)
+                    setSelectedField(null)
                 }}
+                field ={selectedField}
             />
         </div>
     );

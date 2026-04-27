@@ -1,7 +1,9 @@
 import { create } from "zustand";
 import {
     getFields as getFieldsRequest,
-    createField as createFieldRequest
+    createField as createFieldRequest,
+    updatedField as updateFieldRequest,
+    deletedField as deleteFieldRequest
 } from "../../../shared/api";
 
 export const useFieldStores = create((set, get) => ({
@@ -31,21 +33,59 @@ export const useFieldStores = create((set, get) => ({
     },
 
 
-    createField: async(formData) =>{
+    createField: async (formData) => {
         try {
-            set({loading:true, error: null})
-                const response = await createFieldRequest(formData);
+            set({ loading: true, error: null })
+            const response = await createFieldRequest(formData);
 
-                set({
-                    fields: [response.data.data, ...get().fields],
-                    loading: false
-                })
+            set({
+                fields: [response.data.data, ...get().fields],
+                loading: false
+            })
         } catch (error) {
             set({
-                loading:false,
+                loading: false,
                 error: error.response?.data?.message || "Error al crear el campo."
             })
         }
+    },
+
+    updateField: async (id, data) => {
+        try {
+            set({ loading: true, error: null })
+            const response = await updateFieldRequest(id, data)
+            const updated = response.data.data
+
+            set({
+                fields: get().fields.map((f) =>
+                    f._id === id ? updated : f),
+                loading: false,
+            });
+
+        } catch (error) {
+            set({
+                loading: false,
+                error: error.response?.data?.message || "Error al actualizar el campo."
+            })
+        }
+
+    },
+
+    deleteField: async (id) => {
+        try {
+            set({ loading: true, error: null })
+            await deleteFieldRequest(id);
+            set({
+                fields: get().fields.filter(f => f._id !== id),
+                loading: false
+            })
+        } catch (error) {
+            set({
+                loading: false,
+                error: error.response?.data?.message || "Error al crear campo"
+            })
+        }
+
     }
 
 }))

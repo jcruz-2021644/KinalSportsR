@@ -2,7 +2,7 @@ import { useForm } from "react-hook-form";
 import { useFieldStores as useFieldStore } from "../store/useFieldsStores";
 import { Spinner } from "../../../shared/components/layout/Spinner";
 import { useEffect, useState } from "react";
-import { useSaveField } from "../hooks/useSaveField";
+import { useSaveField } from "../hooks/useSaveField.jsx";
 
 
 export const FieldModal = ({ isOpen, onClose, field }) => {
@@ -52,21 +52,17 @@ export const FieldModal = ({ isOpen, onClose, field }) => {
             const file = photoFile[0];
             setPreview(URL.createObjectURL(file))
         }
-    },[photoFile])
+    }, [photoFile])
 
 
-    const onsubmit = async (data) => {
+    const onSubmit = async (data) => {
         await saveField(data, field?._id);
         reset();
         setPreview(null);
         onClose();
-        
 
     };
 
-    const onSubmit = (data) => {
-        console.log(data);
-    };
 
     if (!isOpen) return null;
 
@@ -83,7 +79,7 @@ export const FieldModal = ({ isOpen, onClose, field }) => {
                     }}
                 >
                     <h2 className="text-xl sm:text-2xl font-bold">
-                        Nuevo Campo
+                        {field ? "Editar Campo" : "Nuevo Campo"}
                     </h2>
                     <p className="text-xs sm:text-sm opacity-80">
                         Completa la información de la cancha
@@ -263,7 +259,8 @@ export const FieldModal = ({ isOpen, onClose, field }) => {
                                 border: "none",
                             }}
                         >
-                            Crear campo
+
+                            {loading ? <Spinner small /> : field ? "Guardar cambios" : "Crear campo"}
                         </button>
                     </div>
                 </form>
